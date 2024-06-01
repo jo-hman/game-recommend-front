@@ -17,8 +17,6 @@ const middleware = (request: NextRequest) => {
   const loginUrl = new URL('/login', request.url);
   const panelUrl = new URL('/panel', request.url);
 
-  const now = Date.now();
-
   if (!sessionCookie && !isValidationPath) {
     return NextResponse.redirect(loginUrl);
   }
@@ -26,7 +24,6 @@ const middleware = (request: NextRequest) => {
   if (sessionCookie && isValidationPath) {
     return NextResponse.redirect(panelUrl);
   }
-
 };
 
 export { middleware };
