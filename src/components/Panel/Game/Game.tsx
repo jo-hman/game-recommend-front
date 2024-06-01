@@ -6,13 +6,10 @@ import axios from 'axios';
 import type { Comment, GameBundle } from '../../../types';
 
 import { GameStyled } from './Game.styles';
-import { config } from '../../../config/config';
 import { useSession } from '../../../hooks/use-session';
 import { fetchScore } from '../../../fetching/fetch-score';
 import { fetchComments } from '../../../fetching/fetch-comments';
 import { apiBaseUrl } from '../../../utils/api';
-
-const { hostname } = config;
 
 type PanelProps = {
   gameBundle: GameBundle;

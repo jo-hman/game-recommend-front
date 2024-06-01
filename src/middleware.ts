@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 
 import type { NextRequest } from 'next/server';
-import type { Session } from './hooks/use-session';
 
 import { COOKIE_NAME } from './hooks/use-session';
 
@@ -29,8 +28,6 @@ const middleware = (request: NextRequest) => {
   }
 
   if (sessionCookie && !isValidationPath) {
-    const session = JSON.parse(sessionCookie) as Session;
-
     if (sessionCookie && now) {
       const response = NextResponse.redirect(loginUrl);
 

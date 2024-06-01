@@ -4,9 +4,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
 import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
 
 import { apiBaseUrl } from '../utils/api';
-import { jwtDecode } from 'jwt-decode';
 
 type Session = {
   jwt: string;
@@ -76,19 +76,22 @@ const useSession = () => {
         return null;
       }
       try {
-        const { data } = await axios.post<Session>(`${apiBaseUrl}/accounts/jwt`, {
-          username,
-          password,
-        });
+        const { data } = await axios.post<Session>(
+          `${apiBaseUrl}/accounts/jwt`,
+          {
+            username,
+            password,
+          }
+        );
 
         const decodedToken: { exp: number } = jwtDecode(data.jwt);
-        console.log("Login response:", data);
+        console.log('Login response:', data);
 
         Cookies.set(COOKIE_NAME, JSON.stringify(data), {
           expires: new Date(decodedToken.exp * 1000),
         });
 
-        setSession(data); // Set session state after successful login
+        setSession(data);
         setHasSession(true);
 
         router.push('/panel');
