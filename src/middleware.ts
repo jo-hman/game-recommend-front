@@ -27,16 +27,6 @@ const middleware = (request: NextRequest) => {
     return NextResponse.redirect(panelUrl);
   }
 
-  if (sessionCookie && !isValidationPath) {
-    if (sessionCookie && now) {
-      const response = NextResponse.redirect(loginUrl);
-
-      request.cookies.delete(COOKIE_NAME);
-      response.cookies.delete(COOKIE_NAME);
-
-      return response;
-    }
-  }
 };
 
 export { middleware };
