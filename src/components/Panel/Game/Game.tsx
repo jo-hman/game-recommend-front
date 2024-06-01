@@ -10,6 +10,7 @@ import { config } from '../../../config/config';
 import { useSession } from '../../../hooks/use-session';
 import { fetchScore } from '../../../fetching/fetch-score';
 import { fetchComments } from '../../../fetching/fetch-comments';
+import { apiBaseUrl } from '../../../utils/api';
 
 const { hostname } = config;
 
@@ -24,40 +25,44 @@ const Game: React.FC<PanelProps> = ({ gameBundle }) => {
   const [comment, setComment] = useState<string>('');
   const ref = useRef<HTMLFormElement>(null);
 
-  const { author, game } = gameBundle;
+  const { authorAccountId, id, title, description } = gameBundle;
 
   const { session } = useSession();
 
   const handleSubmit = useCallback(async () => {
-    if (!comment) {
-      return null;
-    }
-
-    await axios.post(
-      `${hostname}/api/game/comment`,
-      { comment, game },
-      {
-        headers: { Authorization: `Bearer ${session.accessToken}` },
+    if (session) {
+      if (!comment) {
+        return null;
       }
-    );
 
-    clearComment();
+      await axios.post(
+        `${apiBaseUrl}/games/${id}/comments`,
+        { comment },
+        {
+          headers: { Authorization: `Bearer ${session.jwt}` },
+        }
+      );
 
-    fetchComments(game.id).then((comments) => {
-      setComments(comments);
-    });
-  }, [comment, game]);
+      clearComment();
+
+      fetchComments(id, session.jwt).then((comments) => {
+        setComments(comments);
+      });
+    }
+  }, [session, comment, id]);
 
   useEffect(() => {
-    fetchScore(game.id).then(({ average, count }) => {
-      setAverage(average);
-      setCount(count);
-    });
+    if (session) {
+      fetchComments(id, session.jwt).then((comments) => {
+        setComments(comments);
+      });
 
-    fetchComments(game.id).then((comments) => {
-      setComments(comments);
-    });
-  }, [game.id]);
+      fetchScore(id, session.jwt).then(({ average, count }) => {
+        setAverage(average);
+        setCount(count);
+      });
+    }
+  }, [session, id]);
 
   useEffect(() => {
     const handleKeyboardInput = (event: KeyboardEvent) => {
@@ -79,14 +84,14 @@ const Game: React.FC<PanelProps> = ({ gameBundle }) => {
 
   const handleScore = async (scoreValue: number) => {
     await axios.post(
-      `${hostname}/api/game/rate`,
-      { score: scoreValue, game },
+      `${apiBaseUrl}/games/${id}/scores`,
+      { score: scoreValue },
       {
-        headers: { Authorization: `Bearer ${session.accessToken}` },
+        headers: { Authorization: `Bearer ${session.jwt}` },
       }
     );
 
-    fetchScore(game.id).then(({ average, count }) => {
+    fetchScore(id, session.jwt).then(({ average, count }) => {
       setAverage(average);
       setCount(count);
     });
@@ -104,10 +109,10 @@ const Game: React.FC<PanelProps> = ({ gameBundle }) => {
   const commentsComponent = comments.length !== 0 && (
     <div className="comments">
       <p className="comments-header">COMMENTS:</p>
-      {comments.map(({ comment: value, user }, index) => {
+      {comments.map(({ comment: value, author }, index) => {
         return (
           <div key={index} className="comment">
-            <p>Author: {user.username}</p>
+            <p>Author: {author}</p>
             <p>{value}</p>
           </div>
         );
@@ -117,12 +122,12 @@ const Game: React.FC<PanelProps> = ({ gameBundle }) => {
 
   return (
     <GameStyled>
-      <p>Title: {game.title}</p>
-      <p>Description: {game.description}</p>
+      <p>Title: {title}</p>
+      <p>Description: {description}</p>
       <p>
         Score: {average} Count: {count}
       </p>
-      <p>Added by: {author.username}</p>
+      <p>Added by: {authorAccountId}</p>
       <div className="scores">
         <button
           type="button"

@@ -9,9 +9,7 @@ import { PanelStyled } from './Panel.styles';
 import { useSession } from '../../hooks/use-session';
 import { Game } from './Game/Game';
 import { fetchGameBundles } from '../../fetching/fetch-games';
-import { config } from '../../config/config';
-
-const { hostname } = config;
+import { apiBaseUrl } from '../../utils/api';
 
 const Panel: React.FC = () => {
   const [gameBundles, setGameBundles] = useState<GameBundle[]>([]);
@@ -22,8 +20,10 @@ const Panel: React.FC = () => {
   const { session, logout } = useSession();
 
   useEffect(() => {
-    fetchGameBundles().then((bundles) => setGameBundles(bundles));
-  }, []);
+    if (session) {
+      fetchGameBundles(session.jwt).then((bundles) => setGameBundles(bundles));
+    }
+  }, [session]);
 
   const handleSubmit = useCallback(async () => {
     if (!title || !description) {
@@ -31,20 +31,20 @@ const Panel: React.FC = () => {
     }
 
     await axios.post(
-      `${hostname}/api/game/create`,
+      `${apiBaseUrl}/games`,
       { title, description },
       {
-        headers: { Authorization: `Bearer ${session.accessToken}` },
+        headers: { Authorization: `Bearer ${session.jwt}` },
       }
     );
 
     clearTitle();
     clearDescription();
 
-    const bundles = await fetchGameBundles();
+    const bundles = await fetchGameBundles(session.jwt);
 
     setGameBundles(bundles);
-  }, [description, title]);
+  }, [session, description, title]);
 
   useEffect(() => {
     const handleKeyboardInput = (event: KeyboardEvent) => {
@@ -85,7 +85,7 @@ const Panel: React.FC = () => {
   const gamesComponent =
     gameBundles.length !== 0 &&
     gameBundles.map((gameBundle) => (
-      <Game key={gameBundle.game.id} gameBundle={gameBundle} />
+      <Game key={gameBundle.id} gameBundle={gameBundle} />
     ));
 
   return (

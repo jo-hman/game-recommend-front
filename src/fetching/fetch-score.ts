@@ -1,17 +1,17 @@
 import axios from 'axios';
 
-import { config } from '../config/config';
-
-const { hostname } = config;
+import { apiBaseUrl } from '../utils/api';
 
 type AverageData = {
   average: number;
   count: number;
 };
 
-const fetchScore = async (id: string) => {
+const fetchScore = async (id: string, jwt: string) => {
   try {
-    const { data } = await axios.post(`${hostname}/api/game/average`, { id });
+    const { data } = await axios.get(`${apiBaseUrl}/games/${id}/scores`, {
+      headers: { Authorization: `Bearer ${jwt}` },
+    });
 
     return data as AverageData;
   } catch (error) {

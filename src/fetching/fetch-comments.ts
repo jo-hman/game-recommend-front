@@ -2,13 +2,13 @@ import axios from 'axios';
 
 import type { Comment } from '../types';
 
-import { config } from '../config/config';
+import { apiBaseUrl } from '../utils/api';
 
-const { hostname } = config;
-
-const fetchComments = async (id: string) => {
+const fetchComments = async (id: string, jwt: string) => {
   try {
-    const { data } = await axios.post(`${hostname}/api/game/reviews`, { id });
+    const { data } = await axios.get(`${apiBaseUrl}/games/${id}/comments`, {
+      headers: { Authorization: `Bearer ${jwt}` },
+    });
 
     return data as Comment[];
   } catch (error) {

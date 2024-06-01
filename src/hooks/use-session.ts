@@ -6,17 +6,16 @@ import Cookies from 'js-cookie';
 import axios from 'axios';
 
 import { apiBaseUrl } from '../utils/api';
+import { jwtDecode } from 'jwt-decode';
 
 type Session = {
-  id: string;
-  accessToken: string;
-  expire: number;
+  jwt: string;
 };
 
 const COOKIE_NAME = 'session';
 
 const useSession = () => {
-  const [session, setSession] = useState<Session>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [hasSession, setHasSession] = useState<boolean>(false);
 
   const router = useRouter();
@@ -26,15 +25,20 @@ const useSession = () => {
     const sessionCookie = Cookies.get(COOKIE_NAME);
 
     if (sessionCookie) {
+      console.log('sessionCookie:', sessionCookie);
+      const parsedSession = JSON.parse(sessionCookie);
+      setSession(parsedSession);
       setHasSession(true);
-      setSession(JSON.parse(sessionCookie));
-
-      return;
+    } else {
+      console.log('No session found');
+      setHasSession(false);
+      setSession(null);
     }
-
-    setHasSession(false);
-    setSession(null);
   }, [pathname]);
+
+  useEffect(() => {
+    console.log('Session updated:', session);
+  }, [session]);
 
   const register = useCallback(
     async (username: string, password: string) => {
@@ -42,16 +46,26 @@ const useSession = () => {
         return null;
       }
 
-      const { data } = await axios.post<Session>(`${apiBaseUrl}/accounts`, {
-        username,
-        password,
-      });
+      try {
+        const { data } = await axios.post<Session>(`${apiBaseUrl}/accounts`, {
+          username,
+          password,
+        });
 
-      await Cookies.set(COOKIE_NAME, JSON.stringify(data), {
-        expires: data.expire,
-      });
+        const decodedToken: { exp: number } = jwtDecode(data.jwt);
 
-      router.push('/panel');
+        Cookies.set(COOKIE_NAME, JSON.stringify(data), {
+          expires: new Date(decodedToken.exp * 1000),
+        });
+
+        setSession(data); // Set session state after successful registration
+        setHasSession(true);
+
+        router.push('/panel');
+      } catch (error) {
+        console.error('Error during registration:', error);
+        throw error;
+      }
     },
     [router]
   );
@@ -61,22 +75,36 @@ const useSession = () => {
       if (!username || !password) {
         return null;
       }
-      const { data } = await axios.post<Session>(`${apiBaseUrl}/accounts/jwt`, {
-        username,
-        password,
-      });
+      try {
+        const { data } = await axios.post<Session>(`${apiBaseUrl}/accounts/jwt`, {
+          username,
+          password,
+        });
 
-      await Cookies.set(COOKIE_NAME, JSON.stringify(data), {
-        expires: data.expire,
-      });
+        const decodedToken: { exp: number } = jwtDecode(data.jwt);
+        console.log("Login response:", data);
 
-      router.push('/panel');
+        Cookies.set(COOKIE_NAME, JSON.stringify(data), {
+          expires: new Date(decodedToken.exp * 1000),
+        });
+
+        setSession(data); // Set session state after successful login
+        setHasSession(true);
+
+        router.push('/panel');
+      } catch (error) {
+        console.error('Error during login:', error);
+        throw error;
+      }
     },
     [router]
   );
 
   const logout = useCallback(async () => {
-    await Cookies.remove(COOKIE_NAME);
+    Cookies.remove(COOKIE_NAME);
+
+    setSession(null);
+    setHasSession(false);
 
     router.push('/login');
   }, [router]);

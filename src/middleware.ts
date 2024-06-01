@@ -31,7 +31,7 @@ const middleware = (request: NextRequest) => {
   if (sessionCookie && !isValidationPath) {
     const session = JSON.parse(sessionCookie) as Session;
 
-    if (sessionCookie && now > session.expire) {
+    if (sessionCookie && now) {
       const response = NextResponse.redirect(loginUrl);
 
       request.cookies.delete(COOKIE_NAME);

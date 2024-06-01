@@ -1,23 +1,14 @@
-type User = {
+type GameBundle = {
   id: string;
-  username: string;
-  password: string;
-};
-
-type Game = {
-  id: string;
+  authorAccountId: string;
   title: string;
   description: string;
+  comments: Comment[];
 };
 
 type Comment = {
   comment: string;
-  user: User;
+  author: string;
 };
 
-type GameBundle = {
-  author: User;
-  game: Game;
-};
-
-export type { User, Game, Comment, GameBundle };
+export type { GameBundle, Comment };
