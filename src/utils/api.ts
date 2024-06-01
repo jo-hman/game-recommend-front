@@ -1,1 +1,1 @@
-export const apiBaseUrl = 'http://localhost:8080';
+export const apiBaseUrl = 'https://gamerecommend-xz6xexabna-lm.a.run.app';
